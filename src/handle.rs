@@ -15,13 +15,7 @@ pub struct Handle {
 
 impl Handle {
     pub fn new(target : String) -> Handle {
-        let mut out = Handle { target : target,
-                               lib : None,
-                               path : None,
-                               modified : 0,
-        };
-        out.check();
-        out
+        Handle { target : target, lib : None, path : None, modified : 0 }
     }
 
     fn deinit(&mut self) {
