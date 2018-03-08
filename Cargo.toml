@@ -8,6 +8,6 @@ glium = "*"
 libloading = "*"
 
 [lib]
-name = "draw"
-path = "src/draw.rs"
+name = "live"
+path = "src/live.rs"
 crate-type = ["cdylib"]

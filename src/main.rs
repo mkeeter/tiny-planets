@@ -1,4 +1,4 @@
-#[macro_use] extern crate glium;
+extern crate glium;
 extern crate libloading;
 
 use std::fs;
@@ -52,7 +52,7 @@ impl Handle {
                 draw(counter, &mut frame);
             }
         });
-        frame.finish();
+        frame.finish().unwrap();
     }
 
     fn timestamp(&self, t : time::SystemTime) -> u64 {
@@ -66,26 +66,25 @@ impl Handle {
                 |t| {
                 let t = self.timestamp(t);
                 if t > self.modified {
-                    println!("Reloading");
                     self.reload(t);
                     self.modified = t;
                 }
             })
-        });
+        }).expect("Could not get file metadata");
     }
 
     fn reload(&mut self, t : u64) {
         self.deinit();
         self.path.as_ref().map(fs::remove_file);
 
-        let new_path = format!("target/debug/libdraw-{}.dylib", t);
-        let mut child = Command::new("install_name_tool")
+        let new_path = format!("{}.{}", self.target, t);
+        Command::new("install_name_tool")
             .args(&["-id", &new_path, &self.target])
             .spawn()
             .expect("Failed to call 'install_name_tool'")
             .wait()
             .expect("Failed to rename library with 'install_name_tool'");
-        fs::copy(&self.target, &new_path);
+        fs::copy(&self.target, &new_path).expect("Could not copy library");
 
         self.lib = Library::new(&new_path).ok();
         self.path = Some(new_path);
@@ -112,11 +111,11 @@ fn main() {
 
     // Run 'cargo watch' to rebuild libraries in the background
     let mut child = Command::new("cargo")
-                           .args(&["watch", "-x", "build --lib"])
+                           .args(&["watch", "-q", "-c", "-x", "build --lib"])
                            .spawn()
                            .expect("Failed to start 'cargo watch'");
 
-    let mut handle = Handle::new("target/debug/libdraw.dylib".to_string());
+    let mut handle = Handle::new("target/debug/liblive.dylib".to_string());
     while !closed {
         handle.check();
 
@@ -134,6 +133,5 @@ fn main() {
         });
     }
 
-    child.kill();
-    println!("Hello, world!");
+    child.kill().expect("Couldn't kill 'cargo watch' subprocess");
 }
