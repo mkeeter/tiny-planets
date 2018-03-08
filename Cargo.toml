@@ -6,6 +6,7 @@ authors = ["Matt Keeter <matt.j.keeter@gmail.com>"]
 [dependencies]
 glium = "*"
 libloading = "*"
+ctrlc = { version = "3.0", features = ["termination"] }
 
 [lib]
 name = "live"
