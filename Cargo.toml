@@ -1,0 +1,13 @@
+[package]
+name = "tiny-planets-rs"
+version = "0.1.0"
+authors = ["Matt Keeter <matt.j.keeter@gmail.com>"]
+
+[dependencies]
+glium = "*"
+libloading = "*"
+
+[lib]
+name = "draw"
+path = "src/draw.rs"
+crate-type = ["cdylib"]
