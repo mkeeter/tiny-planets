@@ -28,16 +28,6 @@ impl Handle {
         out
     }
 
-    fn init(&mut self) {
-        self.lib.as_ref().map(|lib| {
-            unsafe {
-                let init : Symbol<unsafe extern "C" fn()> =
-                    lib.get(b"init\0").unwrap();
-                init();
-            }
-        });
-    }
-
     fn deinit(&mut self) {
         self.lib.as_ref().map(|lib| {
             unsafe {
@@ -92,7 +82,6 @@ impl Handle {
 
         self.lib = Library::new(&new_path).ok();
         self.path = Some(new_path);
-        self.init();
     }
 }
 
