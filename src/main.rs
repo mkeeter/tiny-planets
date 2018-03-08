@@ -31,9 +31,8 @@ fn main() {
 
     let mut handle = handle::Handle::new(
         "target/debug/liblive.dylib".to_string());
-    while running.load(Ordering::SeqCst) {
-        handle.check();
 
+    while running.load(Ordering::SeqCst) {
         handle.draw(counter, display.draw());
         counter += 1;
 

@@ -35,6 +35,7 @@ impl Handle {
     }
 
     pub fn draw(&mut self, counter : i32, mut frame : glium::Frame) {
+        self.check();
         self.lib.as_ref().map(|lib| {
             unsafe {
                 let draw : Symbol<unsafe extern "C" fn(i32, *mut glium::Frame)> =
@@ -49,7 +50,7 @@ impl Handle {
         t.duration_since(time::UNIX_EPOCH).unwrap().as_secs()
     }
 
-    pub fn check(&mut self) {
+    fn check(&mut self) {
         fs::metadata(&self.target).and_then(
             |m| {
                 m.modified().map(
