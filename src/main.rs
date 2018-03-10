@@ -7,7 +7,7 @@ extern crate notify;
 
 mod handle;
 
-use std::process::Command;
+use std::process::{Command, Child};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::sync::mpsc::channel;
@@ -63,7 +63,7 @@ fn main() {
 
     // This command is time-consuming, so we move it into an Option
     // instead of waiting for it to finish before redrawing.
-    let mut rebuild_cmd = None;
+    let mut rebuild_cmd : Option<Child> = None;
 
     let mut counter = 0;
     while running.load(Ordering::SeqCst) {
@@ -87,9 +87,7 @@ fn main() {
                        handle.reload()
                    }
                    Write(_) => {
-                       if rebuild_cmd.is_some() {
-                           rebuild_cmd.take().expect("Failed to rebuild");
-                       }
+                       rebuild_cmd.map(|mut c| { c.wait().expect("Failed to rebuild"); });
                        rebuild_cmd = Some(Command::new("cargo")
                            .args(&["build", "--lib"])
                            .spawn()
