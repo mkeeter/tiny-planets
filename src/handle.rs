@@ -13,9 +13,9 @@ pub struct Handle {
 }
 
 impl Handle {
-    pub fn new(target : String) -> Handle {
+    pub fn new(target : String, display : &glium::Display) -> Handle {
         let mut h = Handle { target : target, lib : None, path : None };
-        h.reload();
+        h.reload(display);
         h
     }
 
@@ -27,6 +27,14 @@ impl Handle {
         });
     }
 
+    pub fn init(&mut self, display : &glium::Display) {
+        self.lib.as_ref().map(|lib| {
+            let init :  Symbol<extern "C" fn(*const glium::Display)> =
+                unsafe { lib.get(b"init\0").unwrap() };
+            init(display);
+        });
+   }
+
     pub fn draw(&mut self, counter : i32, mut frame : glium::Frame) {
         self.lib.as_ref().map(|lib| {
             let draw :  Symbol<extern "C" fn(i32, *mut glium::Frame)> =
@@ -36,7 +44,7 @@ impl Handle {
         frame.finish().unwrap();
     }
 
-    pub fn reload(&mut self) {
+    pub fn reload(&mut self, display : &glium::Display) {
         self.deinit();
         self.path.as_ref().map(fs::remove_file);
 
@@ -55,6 +63,7 @@ impl Handle {
 
         self.lib = Library::new(&new_path).ok();
         self.path = Some(new_path);
+        self.init(display);
     }
 }
 

@@ -49,7 +49,8 @@ fn main() {
 
     // Create a live-reloading handle to the library itself
     let mut handle = handle::Handle::new(
-        "target/debug/liblive.dylib".to_string());
+        "target/debug/liblive.dylib".to_string(),
+        &display);
 
     // Configure a file watcher to rebuild if a file changes
     // (this is the equivalent to 'cargo watch')
@@ -84,7 +85,7 @@ fn main() {
            Ok(event) => {
                match event {
                    Create(_) => {
-                       handle.reload()
+                       handle.reload(&display);
                    }
                    Write(_) => {
                        rebuild_cmd.map(|mut c| { c.wait().expect("Failed to rebuild"); });

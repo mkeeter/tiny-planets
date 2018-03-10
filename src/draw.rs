@@ -143,10 +143,10 @@ pub struct State
 }
 
 impl State {
-    pub fn new(_width : u32, _height : u32) -> State {
+    pub fn new(display : &glium::Display) -> State {
         State{ico : icosphere(4),}
     }
     pub fn draw(&self, _counter : i32, frame : &mut glium::Frame) {
-        frame.clear_color(1.0, 0.5, 0.4, 1.0);
+        frame.clear_color(0.3, 0.2, 0.4, 1.0);
     }
 }
