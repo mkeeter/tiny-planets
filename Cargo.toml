@@ -9,6 +9,8 @@ libloading = "*"
 winit = "*"
 objc = "*"
 notify = "4.0.0"
+nalgebra = "*"
+ctrlc = { version = "3.0", features = ["termination"] }
 
 [lib]
 name = "live"

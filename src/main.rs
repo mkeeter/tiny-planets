@@ -1,4 +1,5 @@
 extern crate glium;
+extern crate ctrlc;
 extern crate winit;
 extern crate notify;
 
@@ -7,6 +8,8 @@ extern crate notify;
 mod handle;
 
 use std::process::Command;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use std::sync::mpsc::channel;
 use std::time::Duration;
 
@@ -15,12 +18,17 @@ use winit::os::macos::WindowExt;
 use notify::{Watcher, RecursiveMode, watcher};
 use notify::DebouncedEvent::Write;
 
+
 ////////////////////////////////////////////////////////////////////////////////
 
 fn main() {
     use glium::glutin;
 
-    let mut running = true;
+    let running = Arc::new(AtomicBool::new(true));
+    let r = running.clone();
+    ctrlc::set_handler(move || {
+        r.store(false, Ordering::SeqCst);
+    }).expect("Error setting Ctrl-C handler");
 
     let mut events_loop = glutin::EventsLoop::new();
     let window = glutin::WindowBuilder::new()
@@ -51,14 +59,14 @@ fn main() {
         "target/debug/liblive.dylib".to_string());
 
     let mut counter = 0;
-    while running {
+    while running.load(Ordering::SeqCst) {
         handle.draw(counter, display.draw());
         counter += 1;
 
         events_loop.poll_events(|ev| {
             match ev {
                 glutin::Event::WindowEvent { event, .. } => match event {
-                    glutin::WindowEvent::Closed => running = false,
+                    glutin::WindowEvent::Closed => running.store(false, Ordering::SeqCst),
                     _ => (),
                 },
                 _ => (),
