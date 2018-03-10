@@ -12,6 +12,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::sync::mpsc::channel;
 use std::time::Duration;
+use std::thread::sleep;
 
 use winit::os::macos::WindowExt;
 
@@ -102,5 +103,8 @@ fn main() {
                _ => println!("Watch error: {:?}", e),
            },
         }
+
+        // Manually cap the frame-rate at 60 FPS
+        sleep(std::time::Duration::from_millis(1000/60));
     }
 }
