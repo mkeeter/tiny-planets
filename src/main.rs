@@ -16,7 +16,7 @@ use std::time::Duration;
 use winit::os::macos::WindowExt;
 
 use notify::{Watcher, RecursiveMode, watcher};
-use notify::DebouncedEvent::Write;
+use notify::DebouncedEvent::{Write, Create};
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -47,16 +47,23 @@ fn main() {
         msg_send![nswindow, setHasShadow:0];
     };
 
-    // Configure a file watcher to rebuild if a file changes
-    // (this is the equivalent to 'cargo watch')
-    let (watch_tx, watch_rx) = channel();
-    let mut watcher = watcher(watch_tx, Duration::from_millis(100)).unwrap();
-    watcher.watch("src", RecursiveMode::Recursive).unwrap();
-    let mut rebuild_cmd = None;
-
     // Create a live-reloading handle to the library itself
     let mut handle = handle::Handle::new(
         "target/debug/liblive.dylib".to_string());
+
+    // Configure a file watcher to rebuild if a file changes
+    // (this is the equivalent to 'cargo watch')
+    let (watch_tx, watch_rx) = channel();
+    let mut watcher = watcher(watch_tx, Duration::from_millis(100))
+        .expect("Couldn't create watcher");
+    watcher.watch("src", RecursiveMode::Recursive)
+        .expect("Couldn't start watching 'src'");
+    watcher.watch(&handle.target, RecursiveMode::NonRecursive)
+        .expect("Couldn't start watching target");
+
+    // This command is time-consuming, so we move it into an Option
+    // instead of waiting for it to finish before redrawing.
+    let mut rebuild_cmd = None;
 
     let mut counter = 0;
     while running.load(Ordering::SeqCst) {
@@ -76,6 +83,9 @@ fn main() {
         match watch_rx.try_recv() {
            Ok(event) => {
                match event {
+                   Create(_) => {
+                       handle.reload()
+                   }
                    Write(_) => {
                        if rebuild_cmd.is_some() {
                            rebuild_cmd.take().expect("Failed to rebuild");
@@ -84,7 +94,7 @@ fn main() {
                            .args(&["build", "--lib"])
                            .spawn()
                            .expect("Failed to start 'cargo build --lib'"));
-                       }
+                   }
                    _ => (),
                }
            },

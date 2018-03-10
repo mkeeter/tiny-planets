@@ -7,15 +7,16 @@ use std::process::Command;
 use self::libloading::{Library, Symbol};
 
 pub struct Handle {
-    target : String,
+    pub target : String,
     lib : Option<Library>,
     path : Option<String>,
-    modified : u64,
 }
 
 impl Handle {
     pub fn new(target : String) -> Handle {
-        Handle { target : target, lib : None, path : None, modified : 0 }
+        let mut h = Handle { target : target, lib : None, path : None };
+        h.reload();
+        h
     }
 
     fn deinit(&mut self) {
@@ -27,7 +28,6 @@ impl Handle {
     }
 
     pub fn draw(&mut self, counter : i32, mut frame : glium::Frame) {
-        self.check();
         self.lib.as_ref().map(|lib| {
             let draw :  Symbol<extern "C" fn(i32, *mut glium::Frame)> =
                 unsafe { lib.get(b"draw\0").unwrap() };
@@ -36,36 +36,22 @@ impl Handle {
         frame.finish().unwrap();
     }
 
-    fn timestamp(&self, t : time::SystemTime) -> u64 {
-        t.duration_since(time::UNIX_EPOCH).unwrap().as_secs()
-    }
-
-    fn check(&mut self) {
-        fs::metadata(&self.target).and_then(
-            |m| {
-                m.modified().map(
-                |t| {
-                let t = self.timestamp(t);
-                if t > self.modified {
-                    self.reload(t);
-                    self.modified = t;
-                }
-            })
-        }).expect("Could not get file metadata");
-    }
-
-    fn reload(&mut self, t : u64) {
+    pub fn reload(&mut self) {
         self.deinit();
         self.path.as_ref().map(fs::remove_file);
 
-        let new_path = format!("{}.{}", self.target, t);
+        let new_path = format!("{}.{}", self.target,
+                time::SystemTime::now().duration_since(time::UNIX_EPOCH)
+                                       .unwrap().as_secs());
+
+        fs::copy(&self.target, &new_path)
+            .expect("Could not copy library");
         Command::new("install_name_tool")
-            .args(&["-id", &new_path, &self.target])
+            .args(&["-id", &new_path, &new_path])
             .spawn()
             .expect("Failed to call 'install_name_tool'")
             .wait()
             .expect("Failed to rename library with 'install_name_tool'");
-        fs::copy(&self.target, &new_path).expect("Could not copy library");
 
         self.lib = Library::new(&new_path).ok();
         self.path = Some(new_path);
