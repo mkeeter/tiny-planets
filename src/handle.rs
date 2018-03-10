@@ -20,22 +20,18 @@ impl Handle {
 
     fn deinit(&mut self) {
         self.lib.as_ref().map(|lib| {
-            unsafe {
-                let deinit : Symbol<unsafe extern "C" fn()> =
-                    lib.get(b"deinit\0").unwrap();
-                deinit();
-            }
+            let deinit : Symbol<extern "C" fn()> =
+                unsafe { lib.get(b"deinit\0").unwrap() };
+            deinit();
         });
     }
 
     pub fn draw(&mut self, counter : i32, mut frame : glium::Frame) {
         self.check();
         self.lib.as_ref().map(|lib| {
-            unsafe {
-                let draw : Symbol<unsafe extern "C" fn(i32, *mut glium::Frame)> =
-                    lib.get(b"draw\0").unwrap();
-                draw(counter, &mut frame);
-            }
+            let draw :  Symbol<extern "C" fn(i32, *mut glium::Frame)> =
+                unsafe { lib.get(b"draw\0").unwrap() };
+            draw(counter, &mut frame);
         });
         frame.finish().unwrap();
     }
