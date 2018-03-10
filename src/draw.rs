@@ -13,9 +13,9 @@ use std::cmp::{min, max};
 
 #[derive(Copy, Clone)]
 struct Vertex {
-    vert : [f32; 3],
+    position : [f32; 3],
 }
-implement_vertex!(Vertex, vert);
+implement_vertex!(Vertex, position);
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -31,7 +31,7 @@ impl TriangleMesh
         where F : Facade
     {
         let vs : Vec<Vertex> = self.verts.iter().map(
-            |q| { Vertex{vert : [q.x, q.y, q.z]} }).collect();
+            |q| { Vertex{position : [q.x, q.y, q.z]} }).collect();
 
         let v = VertexBuffer::new(facade, &vs).unwrap();
         let i =  glium::index::NoIndices(p);
@@ -54,7 +54,7 @@ impl IndexedMesh {
         where F : Facade
     {
         let vs : Vec<Vertex> = self.verts.iter().map(
-            |q| { Vertex{vert : [q.x, q.y, q.z]} }).collect();
+            |q| { Vertex{position : [q.x, q.y, q.z]} }).collect();
 
         let v = VertexBuffer::new(facade, &vs).unwrap();
 
@@ -128,6 +128,8 @@ fn icosphere(level : u8) -> IndexedMesh {
         }
     }
 
+    vs = vs.iter().map(|v| { v / (v.norm() * 2f32) }).collect();
+
     let ts_u : Vec<Vector3<u32>> = ts.iter().map(
                |v| { Vector3::new(v[0] as u32, v[1] as u32, v[2] as u32) })
         .collect();
@@ -139,14 +141,44 @@ fn icosphere(level : u8) -> IndexedMesh {
 
 pub struct State
 {
-    ico : IndexedMesh,
+    prog: glium::Program,
+    vbo : glium::VertexBuffer<Vertex>,
+    indices : glium::IndexBuffer<u32>,
 }
 
 impl State {
     pub fn new(display : &glium::Display) -> State {
-        State{ico : icosphere(4),}
+        let ico = icosphere(2);
+        let (vbo, indices) = ico.buffers(display, PrimitiveType::TrianglesList);
+
+        println!("Start: {:?}", display.get_framebuffer_dimensions());
+        let vertex_shader_src = r#"
+            #version 140
+            in vec3 position;
+            void main() {
+                gl_Position = vec4(position, 1.0);
+            }
+        "#;
+
+        let fragment_shader_src = r#"
+            #version 140
+            out vec4 color;
+            void main() {
+                color = vec4(1.0, 0.0, 0.0, 1.0);
+            }
+        "#;
+
+        let program = glium::Program::from_source(display, vertex_shader_src, fragment_shader_src, None).unwrap();
+
+        State{vbo : vbo, indices : indices, prog : program}
     }
     pub fn draw(&self, _counter : i32, frame : &mut glium::Frame) {
+        let dims = frame.get_dimensions();
         frame.clear_color(0.3, 0.2, 0.4, 1.0);
+        let params = glium::DrawParameters {
+            viewport: Some(Rect { left: 0, bottom : 0, width: dims.0*2, height: dims.1*2}),
+            .. Default::default()
+        };
+        frame.draw(&self.vbo, &self.indices, &self.prog, &glium::uniforms::EmptyUniforms, &params).unwrap();
     }
 }
