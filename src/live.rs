@@ -2,16 +2,17 @@
 // HERE BE DRAGONS
 ////////////////////////////////////////////////////////////////////////////////
 extern crate glium;
+
 mod draw;
 
 use glium::Surface;
 
-static mut STATE : Option<draw::State> = None;
+static mut STATE : Option<draw::draw::State> = None;
 
 #[no_mangle]
 pub extern "C" fn init(display : *const glium::Display) {
     unsafe {
-        STATE = Some(draw::State::new(&*display));
+        STATE = Some(draw::draw::State::new(&*display));
     }
 }
 

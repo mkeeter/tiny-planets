@@ -732,6 +732,7 @@ dependencies = [
  "libloading 0.3.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "nalgebra 0.14.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "notify 4.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "num-traits 0.1.43 (registry+https://github.com/rust-lang/crates.io-index)",
  "objc 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "winit 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
