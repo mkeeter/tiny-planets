@@ -9,9 +9,11 @@ libloading = "*"
 winit = "*"
 objc = "*"
 notify = "4.0.0"
-nalgebra = "*"
+cgmath = "*"
 ctrlc = { version = "3.0", features = ["termination"] }
 num-traits = "*"
+noise = "*"
+rand = "0.4"
 
 [lib]
 name = "live"

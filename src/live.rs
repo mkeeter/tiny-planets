@@ -5,8 +5,6 @@ extern crate glium;
 
 mod draw;
 
-use glium::Surface;
-
 static mut STATE : Option<draw::draw::State> = None;
 
 #[no_mangle]
