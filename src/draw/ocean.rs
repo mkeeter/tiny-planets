@@ -1,4 +1,5 @@
 extern crate cgmath;
+extern crate noise;
 
 use draw::icosphere::icosphere;
 
@@ -11,13 +12,16 @@ use glium::index::{PrimitiveType};
 use self::cgmath::conv::*;
 use self::cgmath::{Matrix4};
 
+use self::noise::NoiseFn;
+
 ////////////////////////////////////////////////////////////////////////////////
 
 #[derive(Copy, Clone)]
 struct Vertex {
     position : [f32; 3],
+    shade : f32,
 }
-implement_vertex!(Vertex, position);
+implement_vertex!(Vertex, position, shade);
 
 const VERTEX_SHADER_SRC : &'static str = r#"
 #version 410
@@ -25,13 +29,16 @@ const VERTEX_SHADER_SRC : &'static str = r#"
 uniform mat4 M;
 
 in vec3 position;
+in float shade;
 
 out vec3 frag_normal;
+out float frag_shade;
 
 void main() {
     gl_Position = M * vec4(position, 1.0);
 
     frag_normal = normalize(gl_Position.xyz);
+    frag_shade = shade;
 }
 "#;
 
@@ -39,13 +46,22 @@ const FRAGMENT_SHADER_SRC : &'static str = r#"
 #version 410
 
 in vec3 frag_normal;
+in float frag_shade;
 
 out vec4 color_out;
 
 void main()
 {
-    float shade = dot(frag_normal, normalize(vec3(0.5f, 0.5f, -1.0f)));
+    float shade = dot(frag_normal, normalize(vec3(0.5f, 0.5f, -1.0f))) * 0.8;
     vec3 blue = vec3(0.1, 0.2, 0.5) * shade + vec3(0.01, 0.05, 0.2) * (1 - shade);
+
+    if (shade + frag_shade * 0.03 > 0.79) {
+        blue += vec3(0.4, 0.4, 0.2);
+    }
+    else if (shade + frag_shade * 0.04 > 0.75) {
+        blue += vec3(0.08, 0.1, 0.03);
+    }
+
     color_out = vec4(blue, 1.0f);
 }
 "#;
@@ -62,9 +78,13 @@ impl Ocean {
     {
         let (v, i) = icosphere(5);
 
+
+        let per = noise::ScalePoint::new(noise::Perlin::new())
+            .set_all_scales(20.0, 20.0, 20.0, 1.0);
+
         let mut buffer : Vec<Vertex> = Vec::new();
         v.iter().for_each(|v| {
-            buffer.push(Vertex { position : [v[0] as f32, v[1] as f32, v[2] as f32] });
+            buffer.push(Vertex { position : [v[0] as f32, v[1] as f32, v[2] as f32], shade : per.get([v[0], v[1], v[2]]) as f32 });
         });
 
         let mut indices : Vec<u32> = Vec::new();

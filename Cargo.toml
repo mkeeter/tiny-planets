@@ -14,6 +14,7 @@ ctrlc = { version = "3.0", features = ["termination"] }
 num-traits = "*"
 noise = "*"
 rand = "0.4"
+image = "*"
 
 [lib]
 name = "live"

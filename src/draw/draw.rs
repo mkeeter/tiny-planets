@@ -4,6 +4,7 @@ extern crate glium;
 use draw::planet::Planet;
 use draw::ocean::Ocean;
 use draw::atmosphere::Atmosphere;
+use draw::stars::Stars;
 
 use glium::*;
 
@@ -16,6 +17,7 @@ pub struct State
     planet : Option<Planet>,
     ocean : Option<Ocean>,
     atmosphere : Option<Atmosphere>,
+    stars : Option<Stars>,
 }
 
 impl State {
@@ -35,9 +37,15 @@ impl State {
             println!("Couldn't construct Atmosphere: {}", atmo.as_ref().err().unwrap());
         }
 
+        let stars = Stars::new(display);
+        if stars.is_err() {
+            println!("Couldn't construct Stars: {}", stars.as_ref().err().unwrap());
+        }
+
         State { planet : planet.ok(),
                 ocean : ocean.ok(),
                 atmosphere : atmo.ok(),
+                stars : stars.ok(),
         }
     }
 
@@ -56,7 +64,9 @@ impl State {
             .. Default::default()
         };
 
-        let mut scale = Vector4::from_value(0.5f32);
+        self.stars.as_ref().map(|a| { a.draw(frame, &params) });
+
+        let mut scale = Vector4::from_value(0.7f32);
         scale.w = 1f32;
         let mut mat = Matrix4::from_diagonal(scale);
         mat.concat_self(&Matrix4::from_angle_y(Rad(counter as f32 / 100f32)));

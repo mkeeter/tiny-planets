@@ -21,7 +21,7 @@ out vec2 frag_pos;
 void main()
 {
     frag_pos = position;
-    gl_Position = vec4(position * 0.55, 0.0, 1.0);
+    gl_Position = vec4(position * 0.75, 0.0, 1.0);
 }
 "#;
 
@@ -73,6 +73,6 @@ impl Atmosphere {
 
     pub fn draw(&self, frame : &mut Frame, params : &DrawParameters) {
         let indices = NoIndices(PrimitiveType::TriangleFan);
-        frame.draw(&self.vbo, indices, &self.program, &EmptyUniforms, params);
+        frame.draw(&self.vbo, indices, &self.program, &EmptyUniforms, params).unwrap();
     }
 }
