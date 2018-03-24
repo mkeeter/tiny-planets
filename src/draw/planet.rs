@@ -93,7 +93,7 @@ impl Planet {
         for i in 0..v.len() {
             // Scale based on Perlin noise field
             let offset = curved.get([v[i][0], v[i][1], v[i][2]]);
-            v[i] *= offset / 5.0 + 1.0;
+            v[i] *= offset / 8.0 + 1.0;
 
             // Add a little random jitter
             v[i].x += jitter();
@@ -116,16 +116,20 @@ impl Planet {
             let beach = [0.8, 0.7, 0.4];
             let snow = [0.8, 0.8, 0.8];
             let rock = [0.5, 0.4, 0.3];
-            let grass = [0.3, 0.7, 0.3];
+            let grass = [0.2, 0.6, 0.2];
 
             let center = ((a + b + c) / 3.0).magnitude();
             let color : Vector3<f64>;
             let color =
-                if center < 1.01 {
+                if center < 1.005 {
                     beach
-                } else if center < 1.05 {
-                    grass
-                } else if center < 1.13 {
+                } else if center < 1.03 {
+                    let mut g = grass;
+                    g[0] += 10f32 * jitter() as f32;
+                    g[1] += 10f32 * jitter() as f32;
+                    g[2] += 10f32 * jitter() as f32;
+                    g
+                } else if center < 1.08 {
                     rock
                 } else {
                     snow

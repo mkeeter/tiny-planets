@@ -3,6 +3,7 @@ extern crate glium;
 
 use draw::planet::Planet;
 use draw::ocean::Ocean;
+use draw::atmosphere::Atmosphere;
 
 use glium::*;
 
@@ -14,6 +15,7 @@ pub struct State
 {
     planet : Option<Planet>,
     ocean : Option<Ocean>,
+    atmosphere : Option<Atmosphere>,
 }
 
 impl State {
@@ -28,8 +30,14 @@ impl State {
             println!("Couldn't construct Planet: {}", planet.as_ref().err().unwrap());
         }
 
+        let atmo = Atmosphere::new(display);
+        if atmo.is_err() {
+            println!("Couldn't construct Atmosphere: {}", atmo.as_ref().err().unwrap());
+        }
+
         State { planet : planet.ok(),
                 ocean : ocean.ok(),
+                atmosphere : atmo.ok(),
         }
     }
 
@@ -55,5 +63,12 @@ impl State {
 
         self.planet.as_ref().map(|p| { p.draw(mat, frame, &params); });
         self.ocean.as_ref().map(|o| { o.draw(mat, frame, &params); });
+
+        let params = glium::DrawParameters {
+            viewport: params.viewport,
+            blend : glium::draw_parameters::Blend::alpha_blending(),
+            .. Default::default()
+        };
+        self.atmosphere.as_ref().map(|a| { a.draw(frame, &params) });
     }
 }
