@@ -7,21 +7,21 @@ use std::cmp::{min, max};
 use self::cgmath::Vector3;
 use self::cgmath::InnerSpace;
 
-pub fn icosphere(level : u8) -> (Vec<Vector3<f32>>, Vec<Vector3<u32>>) {
-    let p = 1.618033988749894f32;
+pub fn icosphere(level : u8) -> (Vec<Vector3<f64>>, Vec<Vector3<usize>>) {
+    let p = 1.618033988749894;
     let vs = vec!(
-        [-1f32,  0f32,  p],
-        [ 1f32, 0f32,   p],
-        [-1f32,  0f32, -p],
-        [ 1f32,  0f32, -p],
-        [ 0f32,  p,  1f32],
-        [ 0f32,  p, -1f32],
-        [ 0f32, -p,  1f32],
-        [ 0f32, -p, -1f32],
-        [ p,  1f32,  0f32],
-        [-p,  1f32,  0f32],
-        [ p, -1f32,  0f32],
-        [-p, -1f32,  0f32]);
+        [-1.0,  0.0,  p],
+        [ 1.0, 0.0,   p],
+        [-1.0,  0.0, -p],
+        [ 1.0,  0.0, -p],
+        [ 0.0,  p,  1.0],
+        [ 0.0,  p, -1.0],
+        [ 0.0, -p,  1.0],
+        [ 0.0, -p, -1.0],
+        [ p,  1.0,  0.0],
+        [-p,  1.0,  0.0],
+        [ p, -1.0,  0.0],
+        [-p, -1.0,  0.0]);
     let ts = vec!(
         [0,   4,   1],
         [0,   9,   4],
@@ -45,7 +45,7 @@ pub fn icosphere(level : u8) -> (Vec<Vector3<f32>>, Vec<Vector3<u32>>) {
         [7,   2,  11]);
 
     let mut ts : Vec<Vector3<usize>> = ts.iter().map(|t| { Vector3::new(t[0], t[1], t[2]) }).collect();
-    let mut vs : Vec<Vector3<f32>> = vs.iter().map(|v| { Vector3::new(v[0], v[1], v[2]) }).collect();
+    let mut vs : Vec<Vector3<f64>> = vs.iter().map(|v| { Vector3::new(v[0], v[1], v[2]) }).collect();
 
     {
         let mut edge_map = HashMap::new();
@@ -53,7 +53,7 @@ pub fn icosphere(level : u8) -> (Vec<Vector3<f32>>, Vec<Vector3<u32>>) {
             let k = (min(a,b), max(a,b));
             if !edge_map.contains_key(&k) {
                 edge_map.insert(k, vs.len());
-                let mid = (vs[a] + vs[b]) / 2f32;
+                let mid = (vs[a] + vs[b]) / 2.0;
                 vs.push(mid);
             }
             return edge_map.get(&k).unwrap().clone();
@@ -75,9 +75,8 @@ pub fn icosphere(level : u8) -> (Vec<Vector3<f32>>, Vec<Vector3<u32>>) {
         *v = v.normalize();
     }
 
-    // Convert from usize to u32
-    let ts : Vec<Vector3<u32>> = ts.iter().map(
-               |t| { Vector3::new(t[0] as u32, t[1] as u32, t[2] as u32) })
+    let ts : Vec<Vector3<usize>> = ts.iter().map(
+               |t| { Vector3::new(t[0], t[1], t[2]) })
         .collect();
 
     (vs, ts)

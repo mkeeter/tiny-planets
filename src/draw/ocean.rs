@@ -64,14 +64,14 @@ impl Ocean {
 
         let mut buffer : Vec<Vertex> = Vec::new();
         v.iter().for_each(|v| {
-            buffer.push(Vertex { position : [v[0], v[1], v[2]] });
+            buffer.push(Vertex { position : [v[0] as f32, v[1] as f32, v[2] as f32] });
         });
 
         let mut indices : Vec<u32> = Vec::new();
         i.iter().for_each(|i| {
-            indices.push(i.x);
-            indices.push(i.y);
-            indices.push(i.z);
+            indices.push(i.x as u32);
+            indices.push(i.y as u32);
+            indices.push(i.z as u32);
         });
 
         let v = VertexBuffer::new(facade, &buffer)?;

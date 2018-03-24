@@ -12,7 +12,7 @@ use glium::backend::Facade;
 use glium::index::{PrimitiveType, NoIndices};
 
 use self::cgmath::conv::*;
-use self::cgmath::{Matrix4, InnerSpace};
+use self::cgmath::{Matrix4, Vector3, InnerSpace};
 use self::rand::distributions::{Range, Sample};
 use self::rand::{SeedableRng, ChaChaRng};
 
@@ -24,9 +24,9 @@ use self::noise::NoiseFn;
 struct Vertex {
     position : [f32; 3],
     normal   : [f32; 3],
-    z_offset : f32,
+    color    : [f32; 3],
 }
-implement_vertex!(Vertex, position, normal, z_offset);
+implement_vertex!(Vertex, position, normal, color);
 
 const VERTEX_SHADER_SRC : &'static str = r#"
 #version 410
@@ -35,20 +35,18 @@ uniform mat4 M;
 
 in vec3 position;
 in vec3 normal;
-in float z_offset;
+in vec3 color;
 
 out vec3 frag_position;
 out vec3 frag_normal;
-out float frag_z;
-out float frag_z_offset;
+out vec3 frag_color;
 
 void main() {
     gl_Position = M * vec4(position, 1.0);
 
     frag_position = position;
     frag_normal   = (M * vec4(normal, 0.0)).xyz;
-    frag_z = length(position);
-    frag_z_offset = z_offset / 10.0f;
+    frag_color = color;
 }
 "#;
 
@@ -57,41 +55,13 @@ const FRAGMENT_SHADER_SRC : &'static str = r#"
 
 in vec3 frag_position;
 in vec3 frag_normal;
-in float frag_z;
-in float frag_z_offset;
+in vec3 frag_color;
 
 out vec4 color_out;
 
 void main()
 {
-    vec3 color;
-
-    const vec3 beach = vec3(0.8, 0.7, 0.4);
-    const vec3 snow = vec3(0.8, 0.8, 0.8);
-    const vec3 rock = vec3(0.5, 0.4, 0.3);
-    const vec3 grass = vec3(0.3, 0.7, 0.3);
-
-    // Special-casing for beaches and mountain peaks
-    if (frag_z < 1.01)
-    {
-        color = beach;
-    }
-    else if (frag_z > 1.15)
-    {
-        color = snow;
-    }
-    else
-    {
-        float fz = frag_z + frag_z_offset;
-        if (fz > 1.15)
-            color = snow;
-        else if (fz > 1.05)
-            color = rock;
-        else
-            color = grass;
-    }
-
-    color_out = vec4(frag_normal.z * color, 1.0f);
+    color_out = vec4(frag_normal.z * frag_color, 1.0f);
 }
 "#;
 
@@ -120,17 +90,10 @@ impl Planet {
         let mut between = Range::new(-0.01, 0.01);
         let mut jitter = || { between.sample(&mut rng) };
 
-        let interp = Interpolator { pts: vec!(
-                [-1f32, -1f32],
-                [ 0f32,  0f32],
-                [ 0.6f32,  0.2f32],
-                [ 1f32,  1f32],
-                ) };
-
         for i in 0..v.len() {
             // Scale based on Perlin noise field
-            let offset = curved.get([v[i][0] as f64, v[i][1] as f64, v[i][2] as f64]) as f32;
-            v[i] *= offset / 5f32 + 1f32;
+            let offset = curved.get([v[i][0], v[i][1], v[i][2]]);
+            v[i] *= offset / 5.0 + 1.0;
 
             // Add a little random jitter
             v[i].x += jitter();
@@ -138,24 +101,41 @@ impl Planet {
             v[i].z += jitter();
         }
 
-        // Per-vertex offsets to jitter biomes up and down
-        let biome_offsets : Vec<f32> = v.iter().map(|v| {
-            per.get([(5f32 * v[0]) as f64, (5f32 * v[1]) as f64, (5f32 * v[2]) as f64]) as f32
-        }).collect();
-
         let mut buffer : Vec<Vertex> = Vec::new();
         i.iter().for_each(|tri| {
-            let a = v[tri[0] as usize];
-            let b = v[tri[1] as usize];
-            let c = v[tri[2] as usize];
+            let a = v[tri[0]];
+            let b = v[tri[1]];
+            let c = v[tri[2]];
+
+            let array3f = |v : Vector3<f64>| { array3([v[0] as f32, v[1] as f32, v[2] as f32]) };
 
             // Find the normal
-            let norm = array3((b - a).cross(c - a).normalize());
+            let norm = array3f((b - a).cross(c - a).normalize());
+
+            // Biome colors (RGB)
+            let beach = [0.8, 0.7, 0.4];
+            let snow = [0.8, 0.8, 0.8];
+            let rock = [0.5, 0.4, 0.3];
+            let grass = [0.3, 0.7, 0.3];
+
+            let center = ((a + b + c) / 3.0).magnitude();
+            let color : Vector3<f64>;
+            let color =
+                if center < 1.01 {
+                    beach
+                } else if center < 1.05 {
+                    grass
+                } else if center < 1.13 {
+                    rock
+                } else {
+                    snow
+                };
+
 
             // Store this triangle, with positions and per-vertex normals
-            buffer.push(Vertex { position : array3(a), normal : norm, z_offset : biome_offsets[tri[0] as usize] });
-            buffer.push(Vertex { position : array3(b), normal : norm, z_offset : biome_offsets[tri[1] as usize] });
-            buffer.push(Vertex { position : array3(c), normal : norm, z_offset : biome_offsets[tri[2] as usize] });
+            buffer.push(Vertex { position : array3f(a), normal : norm, color : color });
+            buffer.push(Vertex { position : array3f(b), normal : norm, color : color });
+            buffer.push(Vertex { position : array3f(c), normal : norm, color : color });
         });
 
         let v = VertexBuffer::new(facade, &buffer)?;
