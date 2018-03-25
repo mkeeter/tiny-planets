@@ -75,16 +75,16 @@ void main()
         shade *= max(min_shade, pow((-depth) / cutoff, 2.0));
     }
 
-    vec2 offset = (tex_coord - 0.5) * 2.0;
-    float n = length(offset);
+    float n = length((tex_coord - 0.5) * 2.0);
+    float circle = 0.2;
     if (n > 1.0) {
         discard;
-    } else if (n > 0.5) {
-        shade *= pow((1.0 - n) * 2.0, 2.0);
+    } else if (n > circle) {
+        shade *= pow((1.0 - n) / (1 - circle), 2.0);
     }
 
     float r = texture(tex, (tex_coord + vec2(mod(tex_index, 6.0), mod(tex_index, 36.0))) / 6.0).r * shade;
-    color_out = vec4(1.0, 1.0, 1.0, r/3.0);
+    color_out = vec4(1.0, 1.0, 1.0, r);
 }
 "#;
 
