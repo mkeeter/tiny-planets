@@ -1,3 +1,4 @@
+extern crate glium;
 extern crate image;
 extern crate noise;
 
@@ -90,11 +91,17 @@ impl Stars {
         Ok(Stars{ vbo: vbo, program: p, tex: tex })
     }
 
-    pub fn draw(&self, frame : &mut Frame, params : &DrawParameters) {
+    pub fn draw(&self, frame : &mut Frame, viewport: &Option<Rect>) {
         let uniforms = uniform! {
             tex: &self.tex,
         };
+
+        let params = glium::DrawParameters {
+            viewport: viewport.clone(),
+            .. Default::default()
+        };
+
         let indices = NoIndices(PrimitiveType::TriangleFan);
-        frame.draw(&self.vbo, &indices, &self.program, &uniforms, params);
+        frame.draw(&self.vbo, &indices, &self.program, &uniforms, &params);
     }
 }
