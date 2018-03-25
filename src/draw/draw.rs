@@ -5,8 +5,10 @@ use draw::planet::Planet;
 use draw::ocean::Ocean;
 use draw::atmosphere::Atmosphere;
 use draw::stars::Stars;
+use draw::clouds::Clouds;
 
 use glium::*;
+use glium::BlendingFunction::{Min, Max, AlwaysReplace};
 
 use self::cgmath::{Vector4, Matrix4, Rad, SquareMatrix, Transform, Array};
 
@@ -18,6 +20,7 @@ pub struct State
     ocean : Option<Ocean>,
     atmosphere : Option<Atmosphere>,
     stars : Option<Stars>,
+    clouds : Option<Clouds>,
 }
 
 impl State {
@@ -42,10 +45,16 @@ impl State {
             println!("Couldn't construct Stars: {}", stars.as_ref().err().unwrap());
         }
 
+        let clouds = Clouds::new(display);
+        if clouds.is_err() {
+            println!("Couldn't construct Clouds: {}", clouds.as_ref().err().unwrap());
+        }
+
         State { planet : planet.ok(),
                 ocean : ocean.ok(),
                 atmosphere : atmo.ok(),
                 stars : stars.ok(),
+                clouds: clouds.ok(),
         }
     }
 
@@ -73,6 +82,24 @@ impl State {
 
         self.planet.as_ref().map(|p| { p.draw(mat, frame, &params); });
         self.ocean.as_ref().map(|o| { o.draw(mat, frame, &params); });
+
+        let params = glium::DrawParameters {
+            viewport: params.viewport,
+            blend : glium::draw_parameters::Blend {
+                color : glium::BlendingFunction::Addition {
+                    source : glium::LinearBlendingFactor::SourceAlpha,
+                    destination : glium::LinearBlendingFactor::OneMinusSourceAlpha,
+                },
+                alpha : glium::BlendingFunction::Addition {
+                    source : glium::LinearBlendingFactor::SourceAlpha,
+                    destination : glium::LinearBlendingFactor::DestinationAlpha,
+                },
+                constant_value: (0.0, 0.0, 0.0, 0.0),
+            },
+
+            .. Default::default()
+        };
+        self.clouds.as_ref().map(|c| { c.draw(mat, frame, &params); });
 
         let params = glium::DrawParameters {
             viewport: params.viewport,

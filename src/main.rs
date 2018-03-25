@@ -90,6 +90,8 @@ fn main() {
                    }
                    Write(_) => {
                        rebuild_cmd.map(|mut c| { c.wait().expect("Failed to rebuild"); });
+                       println!("----------------------------------------");
+                       Command::new("clear").spawn().expect("Failed to spawn clear").wait().expect("Failed to clear");
                        rebuild_cmd = Some(Command::new("cargo")
                            .args(&["build", "--lib"])
                            .spawn()
