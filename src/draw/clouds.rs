@@ -65,12 +65,14 @@ void main()
 {
     float shade = 1.0;
 
+    // Blend clouds as they go behind the planet, since otherwise
+    // they stack up and get too bright.
     float cutoff = 0.4;
-    if (depth > 0.0) {
-        discard;
-    }
-    else if (depth > -cutoff) {
-        shade *= pow((-depth) / cutoff, 2.0);
+    float min_shade = 0.1;
+    if (depth > 0) {
+        shade *= min_shade;
+    } else if (depth > -cutoff) {
+        shade *= max(min_shade, pow((-depth) / cutoff, 2.0));
     }
 
     vec2 offset = (tex_coord - 0.5) * 2.0;
@@ -83,7 +85,6 @@ void main()
 
     float r = texture(tex, (tex_coord + vec2(mod(tex_index, 6.0), mod(tex_index, 36.0))) / 6.0).r * shade;
     color_out = vec4(1.0, 1.0, 1.0, r/3.0);
-    gl_FragDepth = depth;
 }
 "#;
 
@@ -106,15 +107,20 @@ impl Clouds {
         let mut verts : Vec<Vertex> = Vec::new();
         let mut index = 0;
         for i in 0..128 {
+            // Pick a central seed for the cloud on the unit sphere
             let mut v = Vector3::new(1.0, 1.0, 1.0);
             while v.magnitude() > 1.0 {
                 v = Vector3::new(jitter(), jitter(), jitter());
             }
+
             v = v.normalize() * 1.1;
             for j in 0..16 {
-                let w = v + Vector3::new(jitter(), jitter(), jitter()) / 10.0;
+                let w = v + Vector3::new(jitter(), jitter(), jitter()) / 12.0;
+
+                // Prevent the clouds from drifting too much on the Z axis
                 let m = (w.magnitude() - 1.0) / 10.0  + 1.0;
                 let w = w * m / w.magnitude() * v.magnitude();
+
                 verts.push(Vertex {  position: array3(w), offset: [-1f32, -1f32], index: index });
                 verts.push(Vertex {  position: array3(w), offset: [ 1f32, -1f32], index: index });
                 verts.push(Vertex {  position: array3(w), offset: [ 1f32,  1f32], index: index });
@@ -127,7 +133,8 @@ impl Clouds {
             }
         }
 
-
+        // Build a billowy noise texture; different quads index into
+        // different regions on the texture to hide repetition.
         let img = {
             let per = noise::ScalePoint::new(noise::Billow::new())
                 .set_all_scales(0.1, 0.1, 0.1, 1.0);
@@ -138,8 +145,7 @@ impl Clouds {
             })
         };
         let image_dimensions = img.dimensions();
-        let raw = img.into_raw();
-        let img = RawImage2d::from_raw_rgb(raw, image_dimensions);
+        let img = RawImage2d::from_raw_rgb(img.into_raw(), image_dimensions);
         let tex = Texture2d::new(facade, img)?;
 
         let v = VertexBuffer::new(facade, &verts)?;

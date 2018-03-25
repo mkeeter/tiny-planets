@@ -85,18 +85,12 @@ impl State {
 
         let params = glium::DrawParameters {
             viewport: params.viewport,
-            blend : glium::draw_parameters::Blend {
-                color : glium::BlendingFunction::Addition {
-                    source : glium::LinearBlendingFactor::SourceAlpha,
-                    destination : glium::LinearBlendingFactor::OneMinusSourceAlpha,
-                },
-                alpha : glium::BlendingFunction::Addition {
-                    source : glium::LinearBlendingFactor::SourceAlpha,
-                    destination : glium::LinearBlendingFactor::DestinationAlpha,
-                },
-                constant_value: (0.0, 0.0, 0.0, 0.0),
+            depth : Depth {
+                test: glium::DepthTest::IfLess,
+                write: false,
+                .. Default::default()
             },
-
+            blend : glium::draw_parameters::Blend::alpha_blending(),
             .. Default::default()
         };
         self.clouds.as_ref().map(|c| { c.draw(mat, frame, &params); });
