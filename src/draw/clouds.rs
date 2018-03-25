@@ -76,7 +76,7 @@ void main()
     }
 
     float n = length((tex_coord - 0.5) * 2.0);
-    float circle = 0.2;
+    float circle = 0.1;
     if (n > 1.0) {
         discard;
     } else if (n > circle) {
@@ -106,7 +106,7 @@ impl Clouds {
         };
         let mut verts : Vec<Vertex> = Vec::new();
         let mut index = 0;
-        for i in 0..128 {
+        for i in 0..100 {
             // Pick a central seed for the cloud on the unit sphere
             let mut v = Vector3::new(1.0, 1.0, 1.0);
             while v.magnitude() > 1.0 {
@@ -114,8 +114,8 @@ impl Clouds {
             }
 
             v = v.normalize() * 1.1;
-            for j in 0..16 {
-                let w = v + Vector3::new(jitter(), jitter(), jitter()) / 12.0;
+            for j in 0..25 {
+                let w = v + Vector3::new(jitter(), jitter(), jitter()) / 10.0;
 
                 // Prevent the clouds from drifting too much on the Z axis
                 let m = (w.magnitude() - 1.0) / 10.0  + 1.0;
