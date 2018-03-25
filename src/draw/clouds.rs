@@ -119,15 +119,15 @@ impl Clouds {
 
                 // Prevent the clouds from drifting too much on the Z axis
                 let m = (w.magnitude() - 1.0) / 10.0  + 1.0;
-                let w = w * m / w.magnitude() * v.magnitude();
+                let w = array3(w * m / w.magnitude() * v.magnitude());
 
-                verts.push(Vertex {  position: array3(w), offset: [-1f32, -1f32], index: index });
-                verts.push(Vertex {  position: array3(w), offset: [ 1f32, -1f32], index: index });
-                verts.push(Vertex {  position: array3(w), offset: [ 1f32,  1f32], index: index });
+                verts.push(Vertex {  position: w, offset: [-1f32, -1f32], index: index });
+                verts.push(Vertex {  position: w, offset: [ 1f32, -1f32], index: index });
+                verts.push(Vertex {  position: w, offset: [ 1f32,  1f32], index: index });
 
-                verts.push(Vertex {  position: array3(w), offset: [-1f32, -1f32], index: index });
-                verts.push(Vertex {  position: array3(w), offset: [ 1f32,  1f32], index: index });
-                verts.push(Vertex {  position: array3(w), offset: [-1f32,  1f32], index: index });
+                verts.push(Vertex {  position: w, offset: [-1f32, -1f32], index: index });
+                verts.push(Vertex {  position: w, offset: [ 1f32,  1f32], index: index });
+                verts.push(Vertex {  position: w, offset: [-1f32,  1f32], index: index });
 
                 index += 1;
             }
