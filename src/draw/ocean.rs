@@ -61,6 +61,10 @@ void main()
     else if (shade + frag_shade * 0.04 > 0.75) {
         blue += vec3(0.08, 0.1, 0.03);
     }
+    else
+    {
+        blue += frag_shade * 0.02;
+    }
 
     color_out = vec4(blue, 1.0f);
 }
@@ -104,12 +108,22 @@ impl Ocean {
     }
 
     pub fn draw(&self, mat : Matrix4<f32>, frame : &mut Frame, params : &DrawParameters) {
+
+        let params = DrawParameters {
+            depth : Depth {
+                test: DepthTest::IfLess,
+                write: true,
+                .. Default::default()
+            },
+            .. params.clone()
+        };
+
         let uniforms = uniform! {
             M : array4x4(mat),
         };
 
         frame.draw(&self.vbo, &self.indices, &self.program,
-                   &uniforms, params).unwrap();
+                   &uniforms, &params).unwrap();
     }
 }
 

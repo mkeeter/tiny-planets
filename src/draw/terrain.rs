@@ -150,12 +150,21 @@ impl Terrain {
 
     pub fn draw(&self, mat : Matrix4<f32>, frame : &mut Frame, params : &DrawParameters) {
 
+        let params = DrawParameters {
+            depth : Depth {
+                test: DepthTest::IfLess,
+                write: true,
+                .. Default::default()
+            },
+            .. params.clone()
+        };
+
         let indices = NoIndices(PrimitiveType::TrianglesList);
         let uniforms = uniform! {
             M : array4x4(mat),
         };
 
         frame.draw(&self.vbo, indices, &self.program,
-                   &uniforms, params).unwrap();
+                   &uniforms, &params).unwrap();
     }
 }

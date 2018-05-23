@@ -155,6 +155,15 @@ impl Clouds {
     }
 
     pub fn draw(&self, mat : Matrix4<f32>, frame : &mut Frame, params : &DrawParameters) {
+        let params = DrawParameters {
+            depth : Depth {
+                test: DepthTest::IfLess,
+                write: false,
+                .. Default::default()
+            },
+            blend : draw_parameters::Blend::alpha_blending(),
+            .. params.clone()
+        };
         let indices = NoIndices(PrimitiveType::TrianglesList);
         let uniforms = uniform! {
             M : array4x4(mat),
@@ -163,6 +172,6 @@ impl Clouds {
         let indices = NoIndices(PrimitiveType::TrianglesList);
 
         frame.draw(&self.vbo, indices, &self.program,
-                   &uniforms, params).unwrap();
+                   &uniforms, &params).unwrap();
     }
 }

@@ -72,7 +72,11 @@ impl Atmosphere {
     }
 
     pub fn draw(&self, frame : &mut Frame, params : &DrawParameters) {
+        let params = DrawParameters {
+            blend : draw_parameters::Blend::alpha_blending(),
+            .. params.clone()
+        };
         let indices = NoIndices(PrimitiveType::TriangleFan);
-        frame.draw(&self.vbo, indices, &self.program, &EmptyUniforms, params).unwrap();
+        frame.draw(&self.vbo, indices, &self.program, &EmptyUniforms, &params).unwrap();
     }
 }

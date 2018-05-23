@@ -91,17 +91,12 @@ impl Stars {
         Ok(Stars{ vbo: vbo, program: p, tex: tex })
     }
 
-    pub fn draw(&self, frame : &mut Frame, viewport: &Option<Rect>) {
+    pub fn draw(&self, frame : &mut Frame, params: &glium::DrawParameters) {
         let uniforms = uniform! {
             tex: &self.tex,
         };
 
-        let params = glium::DrawParameters {
-            viewport: viewport.clone(),
-            .. Default::default()
-        };
-
         let indices = NoIndices(PrimitiveType::TriangleFan);
-        frame.draw(&self.vbo, &indices, &self.program, &uniforms, &params);
+        frame.draw(&self.vbo, &indices, &self.program, &uniforms, params);
     }
 }

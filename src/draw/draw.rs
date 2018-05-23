@@ -18,18 +18,11 @@ pub struct State
 
 impl State {
     pub fn new(display : &glium::Display) -> State {
-        let planet = Planet::new(display);
-        if planet.is_err() {
-            println!("Couldn't construct Planet: {}", planet.as_ref().err().unwrap());
-        }
-
-        let stars = Stars::new(display);
-        if stars.is_err() {
-            println!("Couldn't construct Stars: {}", stars.as_ref().err().unwrap());
-        }
-
-        State { planet : planet.ok(),
-                stars : stars.ok(),
+        State {
+            planet : Planet::new(display).map_err(|err| {
+                println!("Couldn't construct Planet: {}", err)}).ok(),
+            stars : Stars::new(display).map_err(|err| {
+                println!("Couldn't construct Stars: {}", err)}).ok(),
         }
     }
 
@@ -38,9 +31,13 @@ impl State {
         frame.clear_color(0.0, 0.0, 0.0, 1.0);
         frame.clear_depth(1.0);
 
-        let viewport = Some(Rect { left: 0, bottom : 0, width: dims.0*2, height: dims.1*2});
+        let params = glium::DrawParameters {
+            viewport: Some(Rect { left: 0, bottom : 0,
+                                  width: dims.0*2, height: dims.1*2}),
+            .. Default::default()
+        };
 
-        self.stars.as_ref().map(|a| { a.draw(frame, &viewport) });
-        self.planet.as_ref().map(|p| { p.draw(counter, frame, &viewport) });
+        self.stars.as_ref().map(|a| { a.draw(frame, &params) });
+        self.planet.as_ref().map(|p| { p.draw(counter, frame, &params) });
     }
 }
